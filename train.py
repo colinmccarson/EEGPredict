@@ -132,14 +132,14 @@ if __name__ == '__main__':
     print('Shape of test set after dimension reshaping:', x_test.shape)
 
     # Compiling the model
-    filters = 16
-    kernel_size = (9, 1)  # This is the filter size
+    filters = 32
+    kernel_size = (7, 1)  # This is the filter size
     dropout = .5
     l2_lambda = 0.001
     num_deep = 2
     num_fc = 2
     strides = 1
-    use_batchnorm = False
+    use_batchnorm = True
     use_conv_dropout = False
 
     # Opt parameters
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     # Define early stopping criteria
     early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, restore_best_weights=True, mode='min')
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=3, min_lr=1e-6, mode='min')
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=5, min_lr=1e-6, mode='min')
     export_weights = callbacks.ExportModel(my_model.archname)
     # Add early stopping callback to the list of callbacks
     callbacks = [early_stopping, reduce_lr, export_weights]
@@ -168,8 +168,8 @@ if __name__ == '__main__':
                                                epochs=epochs,
                                                validation_data=(x_valid, y_valid),
                                                callbacks=callbacks, verbose=True)
+    keras.saving.save_model(my_model.model, my_model.archname + "_epochs" + str(epochs) + ".keras", overwrite=True)
 
     ## Testing the hybrid CNN-RNN model
     cnn_rnn_score = my_model.model.evaluate(x_test, y_test, verbose=0)
-    keras.saving.save_model(my_model.archname + "_epochs" + str(epochs) + ".keras")
     print('Test accuracy of the hybrid CNN-RNN model:', cnn_rnn_score[1])
