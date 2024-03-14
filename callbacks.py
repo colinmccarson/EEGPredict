@@ -5,28 +5,28 @@ from keras import saving
 
 
 class ExportModel(Callback):
-    def __init__(self, model_name, directory='./weights', monitor='val_loss'):
+    def __init__(self, model_name, directory='./weights', monitor='val_accuracy'):
         super(ExportModel, self).__init__()
         self.directory = directory
         self.monitor = monitor
-        self.best_val_loss = float('inf')
+        self.best_val_acc = 0
         self.model_name = model_name
 
     def on_epoch_end(self, epoch, logs=None):
-        val_loss = logs.get(self.monitor)
-        if val_loss is None:
+        val_acc = logs.get(self.monitor)
+        if val_acc is None:
             return
 
-        if val_loss >= self.best_val_loss:
+        if val_acc <= self.best_val_acc:
             return
 
-        self.best_val_loss = val_loss
+        self.best_val_acc = val_acc
 
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
-        str_val_loss = str(val_loss).replace('.,)( ', '_')
-        filename = os.path.join(self.directory, f'model_{self.model_name}.keras')
+        str_val_loss = str(val_acc).replace('.', '_')
+        filename = os.path.join(self.directory, f'model_{self.model_name}_v{str_val_loss}.keras')
 
         self.model.save(filename, overwrite=True)
         saving.save_model(self.model, filename)

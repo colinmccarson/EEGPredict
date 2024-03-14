@@ -133,19 +133,22 @@ if __name__ == '__main__':
 
     # Compiling the model
     filters = 16
-    kernel_size = (5, 5)  # This is the filter size, now 3d
+    kernel_size = (9, 1)  # This is the filter size
     dropout = .5
     l2_lambda = 0.001
-    num_deep = 3
+    num_deep = 2
     num_fc = 2
     strides = 1
+    use_batchnorm = False
+    use_conv_dropout = False
 
     # Opt parameters
-    learning_rate = 1e-2
-    epochs = 35
+    learning_rate = 1e-3
+    epochs = 25
     cnn_rnn_optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
-    my_model = cnn.VGG_INSPIRED_CNN(filters, kernel_size, dropout, l2_lambda, num_deep, num_fc, strides)
+    my_model = cnn.VGG_INSPIRED_CNN(filters, kernel_size, dropout, l2_lambda,
+                                    num_deep, num_fc, use_batchnorm, use_conv_dropout)
 
     # Define early stopping criteria
     early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, restore_best_weights=True, mode='min')
@@ -168,4 +171,5 @@ if __name__ == '__main__':
 
     ## Testing the hybrid CNN-RNN model
     cnn_rnn_score = my_model.model.evaluate(x_test, y_test, verbose=0)
+    keras.saving.save_model(my_model.archname + "_epochs" + str(epochs) + ".keras")
     print('Test accuracy of the hybrid CNN-RNN model:', cnn_rnn_score[1])
