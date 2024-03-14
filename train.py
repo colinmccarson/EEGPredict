@@ -132,39 +132,40 @@ if __name__ == '__main__':
     print('Shape of test set after dimension reshaping:', x_test.shape)
 
     # Compiling the model
-    filters = 25
-    kernel_size = (7, 7)
+    filters = 16
+    kernel_size = (5, 5)  # This is the filter size, now 3d
     dropout = .5
     l2_lambda = 0.001
     num_deep = 3
     num_fc = 2
+    strides = 1
 
     # Opt parameters
-    learning_rate = 1e-3
-    epochs = 25
+    learning_rate = 1e-2
+    epochs = 35
     cnn_rnn_optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
+    my_model = cnn.VGG_INSPIRED_CNN(filters, kernel_size, dropout, l2_lambda, num_deep, num_fc, strides)
+
     # Define early stopping criteria
-    early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, restore_best_weights=True)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=2, min_lr=1e-6, mode='min')
-    export_weights = callbacks.ExportModelWeights()
+    early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, restore_best_weights=True, mode='min')
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=3, min_lr=1e-6, mode='min')
+    export_weights = callbacks.ExportModel(my_model.archname)
     # Add early stopping callback to the list of callbacks
     callbacks = [early_stopping, reduce_lr, export_weights]
 
-    my_cnn = cnn.CNN(filters, kernel_size, dropout, l2_lambda, num_deep, num_fc)
-
-    my_cnn.model.compile(loss='categorical_crossentropy',
-                         optimizer=cnn_rnn_optimizer,
-                         metrics=['accuracy'])
+    my_model.model.compile(loss='categorical_crossentropy',
+                           optimizer=cnn_rnn_optimizer,
+                           metrics=['accuracy'])
 
     # Training and validating the model
-    cnn_rnn_model_results = my_cnn.model.fit(x_train,
-                                             y_train,
-                                             batch_size=64,
-                                             epochs=epochs,
-                                             validation_data=(x_valid, y_valid),
-                                             callbacks=callbacks, verbose=True)
+    cnn_rnn_model_results = my_model.model.fit(x_train,
+                                               y_train,
+                                               batch_size=64,
+                                               epochs=epochs,
+                                               validation_data=(x_valid, y_valid),
+                                               callbacks=callbacks, verbose=True)
 
     ## Testing the hybrid CNN-RNN model
-    cnn_rnn_score = my_cnn.model.evaluate(x_test, y_test, verbose=0)
+    cnn_rnn_score = my_model.model.evaluate(x_test, y_test, verbose=0)
     print('Test accuracy of the hybrid CNN-RNN model:', cnn_rnn_score[1])
