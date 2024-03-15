@@ -133,29 +133,36 @@ if __name__ == '__main__':
 
     # Compiling the model
     filters = 32
-    kernel_size = (7, 1)  # This is the filter size
+    kernel_size = (5, 1)  # This is the filter size
     dropout = .5
     l2_lambda = 0.001
-    num_deep = 2
+    num_deep = 3
     num_fc = 2
     strides = 1
     use_batchnorm = True
     use_conv_dropout = False
+    conv_dropout = .1
+    pool_size = (2, 1)
+    cnn_layers = 3
+    # params that worked well: 32 filters, 7x1 filter, .5 dropout on FC, l2 .001, 2 deepconv, 2 fc, strides = 1,
+    # no conv dropout.
 
     # Opt parameters
     learning_rate = 1e-3
-    epochs = 25
+    epochs = 40
     cnn_rnn_optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
-    my_model = cnn.VGG_INSPIRED_CNN(filters, kernel_size, dropout, l2_lambda,
-                                    num_deep, num_fc, use_batchnorm, use_conv_dropout)
+    '''my_model = cnn.VGG_INSPIRED_CNN(filters, kernel_size, dropout, l2_lambda,
+                                    num_deep, num_fc, use_batchnorm, use_conv_dropout, conv_dropout)'''
+    my_model = cnn.SimpleConv(cnn_layers, filters, kernel_size, conv_dropout, l2_lambda, num_fc, pool_size)
 
     # Define early stopping criteria
-    early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, restore_best_weights=True, mode='min')
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=5, min_lr=1e-6, mode='min')
+    early_stopping = EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='min')
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=1e-1, patience=8, min_lr=1e-6, mode='min')
     export_weights = callbacks.ExportModel(my_model.archname)
+    export_on_70test = callbacks.ExportModelTest70(my_model.archname, x_test, y_test)
     # Add early stopping callback to the list of callbacks
-    callbacks = [early_stopping, reduce_lr, export_weights]
+    callbacks = [early_stopping, reduce_lr, export_weights, export_on_70test]
 
     my_model.model.compile(loss='categorical_crossentropy',
                            optimizer=cnn_rnn_optimizer,
@@ -168,7 +175,8 @@ if __name__ == '__main__':
                                                epochs=epochs,
                                                validation_data=(x_valid, y_valid),
                                                callbacks=callbacks, verbose=True)
-    keras.saving.save_model(my_model.model, my_model.archname + "_epochs" + str(epochs) + ".keras", overwrite=True)
+    keras.saving.save_model(my_model.model, "./weights/final/" + my_model.archname + "_epochs" + str(epochs) + "_final" +
+                            ".keras", overwrite=True)
 
     ## Testing the hybrid CNN-RNN model
     cnn_rnn_score = my_model.model.evaluate(x_test, y_test, verbose=0)

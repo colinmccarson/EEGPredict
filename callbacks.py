@@ -33,3 +33,19 @@ class ExportModel(Callback):
 
         print("\nModel saved at epoch", epoch + 1, "to", filename)
 
+class ExportModelTest70(Callback):
+    def __init__(self, model_name, xtest, ytest, directory='./weights', monitor='val_accuracy'):
+        super(ExportModelTest70, self).__init__()
+        self.directory = directory
+        self.monitor = monitor
+        self.best_val_acc = 0
+        self.model_name = model_name
+        self.xtest = xtest
+        self.ytest = ytest
+
+    def on_epoch_end(self, epoch, logs=None):
+        if self.model.evaluate(self.xtest, self.ytest, verbose=0)[1] >= .7:
+            filename = os.path.join(self.directory, f'model_{self.model_name}_test70.keras')
+            saving.save_model(self.model, filename)
+            print("\nModel saved at epoch", epoch + 1, "to", filename)
+
